@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+>
+<head>
+    <title>开票数据校验</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <script th:src="@{/jquery/jquery-1.9.1.min.js}"></script>
+    <script th:src="@{/jquery/jquery-migrate-1.1.1.js}"></script>
+    <link rel="stylesheet" th:href="@{/bootstrap/2.3.1/css_default/bootstrap.min.css}"/>
+    <script th:src="@{/bootstrap/2.3.1/js/bootstrap.js}"></script>
+    <link rel="stylesheet" th:href="@{/jquery-select2/3.4/select2.min.css}"/>
+    <script th:src="@{/jquery-select2/3.4/select2.min.js}"></script>
+    <link id="skin" rel="stylesheet" th:href="@{/jquery-jbox/2.3/Skins/Default/jbox.css}"/>
+    <script type="text/javascript" th:src="@{/jquery-jbox/2.3/jquery.jBox-2.3.js}"></script>
+    <script type="text/javascript" th:src="@{/jquery-jbox/2.3/i18n/jquery.jBox-zh-CN.js}"></script>
+    <style>
+        li {
+            list-style-type: none;
+            margin: 2px 10px;
+            display: inline-block;
+        }
+
+        #contentTable {
+            width: 95%;
+        }
+    </style>
+    <script >
+        /*<![CDATA[*/
+        function btnDoCheckSubmit() {
+            var isFail = false;
+            $.each($(".checkInput"), function (i, v) {
+                var txtId = $(v).attr("data-target");
+                var txtTitle = $(v).text();
+                var txtVal = $("#" + txtId).val();
+                var txtType = $("#" + txtId).attr("type");
+                if (txtVal == null || $.trim(txtVal).length == 0) {
+                    $.jBox.tip(txtTitle + " 不能为空！", "error");
+                    $("#" + txtId).select();
+                    isFail = true;
+                    return false;
+                }
+                var regex = /^\d+$/;
+                if (txtType.toLowerCase() == "number" && regex.test(txtVal) == false) {
+                    $.jBox.tip(txtTitle + " 必须是无符号正整数！", "error");
+                    $("#" + txtId).select();
+                    isFail = true;
+                    return false;
+                }
+            });
+            if (isFail) {
+                return false;
+            }
+            $.jBox.tip("数据分析校验中，请稍候...", 'loading');
+            setTimeout(function () {
+                $("#checkInvoicingForm").submit();
+            }, 200);
+        }
+        /*]]>*/
+    </script>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <table id="contentTable" class="table table-bordered table-striped" align="center" th:if="${results!=null and results.size()!=0}" >
+        <caption><h1>数据校验结果</h1></caption>
+        <tbody th:style="'color:'+${msgColor}+';'">
+        <tr th:each="res:${results}">
+            <td th:text="${res}"></td>
+        </tr>
+        <tr>
+            <td>
+                <button onclick="javascript:$('#checkInvoicingDiv').show();$('#contentTable').hide();">关闭</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div id="checkInvoicingDiv" th:class="'breadcrumb form-search '+${(results!=null and results.size()!=0)?'hide':''}">
+    <h1 class="page-header">&nbsp;&nbsp;开票数据校验</h1>
+    <form id="checkInvoicingForm" class="breadcrumb form-search" action="/checkInvoicing/doCheck" method="post" enctype="multipart/form-data">
+        <ul class="ul-form">
+            <!-- 联系人 -->
+            <li>
+                <label data-target="linkManExcelFile" class="checkInput">上传联系人excel</label>
+                <input id="linkManExcelFile" name="linkManExcelFile" class="input-mini" type="file"/>
+            </li>
+        </ul>
+        <ul class="ul-form">
+            <li>
+                <label data-target="linkManSheetNum" class="checkInput">使用第几个页签里的数据</label>
+                <input id="linkManSheetNum" name="linkManSheetNum" value="11" class="input-mini" type="number" step="1" min="1" max="128" />
+            </li>
+            <li>
+                <label data-target="linkManBeginRowNum" class="checkInput">数据开始行数</label>
+                <input id="linkManBeginRowNum" name="linkManBeginRowNum" value="1" class="input-mini" type="number" step="1" min="1" max="128" />
+            </li>
+            <li>
+                <label data-target="linkManNameColumnNum" class="checkInput">姓名所在列数</label>
+                <input id="linkManNameColumnNum" name="linkManNameColumnNum" value="1" class="input-mini" type="number" step="1" min="1" max="128" />
+            </li>
+            <li>
+                <label data-target="linkManMobileColumnNum" class="checkInput">手机号所在列数</label>
+                <input id="linkManMobileColumnNum" name="linkManMobileColumnNum" value="3" class="input-mini" type="number" step="1" min="1" max="128" />
+            </li>
+        </ul>
+        <ul class="ul-form" style="border-top: 1px solid black; padding-top: 20px;">
+            <!-- 汇总表 -->
+            <li class="">
+                <label data-target="summaryExcelFile" class="checkInput">上传汇总表excel</label>
+                <input id="summaryExcelFile" name="summaryExcelFile" class="input-mini" type="file"/>
+            </li>
+        </ul>
+        <ul class="ul-form">
+            <li>
+                <label data-target="summarySheetNum" class="checkInput">使用第几个页签里的数据</label>
+                <input id="summarySheetNum" name="summarySheetNum" value="1" class="input-mini" type="number" step="1" min="1" max="128" />
+            </li>
+            <li>
+                <label data-target="summaryBeginRowNum" class="checkInput">数据开始行数</label>
+                <input id="summaryBeginRowNum" name="summaryBeginRowNum" value="3" class="input-mini" type="number" step="1" min="1" max="128" />
+            </li>
+            <li>
+                <label data-target="summaryNameColumnNum" class="checkInput">姓名所在列数</label>
+                <input id="summaryNameColumnNum" name="summaryNameColumnNum" value="3" class="input-mini" type="number" step="1" min="1" max="128" />
+            </li>
+            <li>
+                <label data-target="summaryMealsColumnNum" class="checkInput">伙食费所在列数</label>
+                <input id="summaryMealsColumnNum" name="summaryMealsColumnNum" value="6" class="input-mini" type="number" step="1" min="1" max="128" />
+            </li>
+            <li>
+                <label data-target="summaryTuitionColumnNum" class="checkInput">保育教育费所在列数</label>
+                <input id="summaryTuitionColumnNum" name="summaryTuitionColumnNum" value="7" class="input-mini" type="number" step="1" min="1" max="128" />
+            </li>
+        </ul>
+        <ul class="ul-form" style="border-top: 1px solid black; padding-top: 20px;">
+            <!-- 统一表 -->
+            <li>
+                <label data-target="tuitionExcelFile" class="checkInput">上传统一（教育费）表excel</label>
+                <input id="tuitionExcelFile" name="tuitionExcelFile" class="input-mini" type="file"/>
+            </li>
+        </ul>
+        <ul class="ul-form">
+            <li>
+                <label data-target="tuitionSheetNum" class="checkInput">使用第几个页签里的数据</label>
+                <input id="tuitionSheetNum" name="tuitionSheetNum" value="1" class="input-mini" type="number" step="1" min="1" max="128" />
+            </li>
+            <li>
+                <label data-target="tuitionBeginRowNum" class="checkInput">数据开始行数</label>
+                <input id="tuitionBeginRowNum" name="tuitionBeginRowNum" value="2" class="input-mini" type="number" step="1" min="1" max="128" />
+            </li>
+            <li>
+                <label data-target="tuitionNameColumnNum" class="checkInput">姓名所在列数</label>
+                <input id="tuitionNameColumnNum" name="tuitionNameColumnNum" value="2" class="input-mini" type="number" step="1" min="1" max="128" />
+            </li>
+            <li>
+                <label data-target="tuitionMobileColumnNum" class="checkInput">手机号所在列数</label>
+                <input id="tuitionMobileColumnNum" name="tuitionMobileColumnNum" value="4" class="input-mini" type="number" step="1" min="1" max="128" />
+            </li>
+            <li>
+                <label data-target="tuitionAmountColumnNum" class="checkInput">合计金额所在列数</label>
+                <input id="tuitionAmountColumnNum" name="tuitionAmountColumnNum" value="7" class="input-mini" type="number" step="1" min="1" max="128" />
+            </li>
+        </ul>
+        <ul class="ul-form" style="border-top: 1px solid black; padding-top: 20px;">
+            <!-- 往来表 -->
+            <li>
+                <label data-target="mealsExcelFile" class="checkInput">上传往来（伙食费）表excel</label>
+                <input id="mealsExcelFile" name="mealsExcelFile" class="input-mini" type="file"/>
+            </li>
+        </ul>
+        <ul class="ul-form">
+            <li>
+                <label data-target="mealsSheetNum" class="checkInput">使用第几个页签里的数据</label>
+                <input id="mealsSheetNum" name="mealsSheetNum" value="1" class="input-mini" type="number" step="1" min="1" max="128" />
+            </li>
+            <li>
+                <label data-target="mealsBeginRowNum" class="checkInput">数据开始行数</label>
+                <input id="mealsBeginRowNum" name="mealsBeginRowNum" value="2" class="input-mini" type="number" step="1" min="1" max="128" />
+            </li>
+            <li>
+                <label data-target="mealsNameColumnNum" class="checkInput">姓名所在列数</label>
+                <input id="mealsNameColumnNum" name="mealsNameColumnNum" value="2" class="input-mini" type="number" step="1" min="1" max="128" />
+            </li>
+            <li>
+                <label data-target="mealsMobileColumnNum" class="checkInput">手机号所在列数</label>
+                <input id="mealsMobileColumnNum" name="mealsMobileColumnNum" value="4" class="input-mini" type="number" step="1" min="1" max="128" />
+            </li>
+            <li>
+                <label data-target="mealsAmountColumnNum" class="checkInput">合计金额所在列数</label>
+                <input id="mealsAmountColumnNum" name="mealsAmountColumnNum" value="7" class="input-mini" type="number" step="1" min="1" max="128" />
+            </li>
+        </ul>
+        <ul class="ul-form" style="border-top: 1px solid black; padding-top: 20px;">
+            <li class="btns">
+                <input id="btnDoCheck" class="btn btn-primary" type="button" value="开始校验" onclick="btnDoCheckSubmit()"/>
+            </li>
+        </ul>
+    </form>
+    </div>
+</div>
+</body>
+</html>

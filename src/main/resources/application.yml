@@ -1,0 +1,54 @@
+server:
+  #指定服务启动端口
+  port: 11986
+  compression:
+    enabled: true
+    mime-types: 'text/html,text/xml,text/css,text/javascript,text/plain'
+  tomcat:
+    max-connections: 1000
+    max-threads: 800
+  
+spring:
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML5
+    encoding: UTF-8
+    content-type: text/html
+  boot:
+    admin:
+      client:
+        #服务在admin管理优先使用IP注册
+        prefer-ip: true
+
+management:
+  health:
+    redis:
+      enabled: false
+  security:
+    #管理后台安全认证关闭
+    enabled: false
+
+endpoints: 
+  shutdown:
+    enabled: true     #启动shutdown
+    sensitive: false  #禁用密码验证
+
+#此处是应用程序配置属性入口，原则上应用自己的配置属性均应该用app.conf开头
+app:
+  conf:
+
+
+---
+spring:
+  #指定本地电脑配置
+  profiles: local
+#日志配置（此配置将覆盖bootstrap.yml中的配置）
+logging:
+  level:
+    root: INFO
+#此处是应用程序配置属性入口，原则上应用自己的配置属性均应该用app.conf开头
+app:
+  conf:
+
