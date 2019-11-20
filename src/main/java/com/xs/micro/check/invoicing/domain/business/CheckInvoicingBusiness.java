@@ -59,73 +59,124 @@ public class CheckInvoicingBusiness extends BaseBusiness {
             }
             // 循环总表数据
             for (SummaryItemVO summaryItem : summaryInfo.getList()) {
-                String summaryName = removeAllSpaceChar(summaryItem.getName());
-                // 只校验教育费大于0
-                if (summaryItem.getTuition() > 0) {
-                    if (canCheckTuition) {
-                        // 循环教育费
-                        TuitionItemVO findTuitionItem = null;
-                        for (TuitionItemVO tuitionItem : tuitionInfo.getList()) {
-                            String tuitionName = removeAllSpaceChar(tuitionItem.getName());
-                            // 比较姓名、金额
-                            if (StringUtils.equalsIgnoreCase(summaryName, tuitionName) && summaryItem.getTuition() == tuitionItem.getAmount()) {
-                                // 找到数据跳出循环
-                                findTuitionItem = tuitionItem;
-                                break;
-                            }
-                        }
-                        if (findTuitionItem == null) {
-                            // 教育费数据没找到
-                            errors.add(String.format("总表中 [ %s ] 的教育费 [ %f ] 在统一（教育费）表中没找到", summaryItem.getName(), summaryItem.getTuition()));
-                            continue;
-                        }
-                        if (canCheckLinkMan) {
-                            // 校验联系人
-                            boolean findTuitionLinkMan = findLinkMan(linkManList, findTuitionItem.getName(), findTuitionItem.getMobile());
-                            if (!findTuitionLinkMan) {
-                                errors.add(String.format("统一（教育费）表中 [ %s ] 的手机号 [ %s ] 在联系人表中没找到", findTuitionItem.getName(), findTuitionItem.getMobile()));
-                            }
-                            if (!ValidateUtil.isMobile(findTuitionItem.getMobile())) {
-                                errors.add(String.format("统一（教育费）表中 [ %s ] 的手机号 [ %s ] 填写的不是手机号", findTuitionItem.getName(), findTuitionItem.getMobile()));
-                            }
-                        }
-                    }
+                if (canCheckTuition) {
+                    // 校验教育费
+                    List<String> tuitionErrors = checkTuition(tuitionInfo.getList(), linkManList, canCheckLinkMan, summaryItem.getTuition(), summaryItem.getName());
+                    errors.addAll(tuitionErrors);
                 }
-                // 只校验伙食费大于0
-                if (summaryItem.getMeals() > 0) {
-                    if (canCheckMeals) {
-                        // 循环伙食费
-                        MealsItemVO findMealsItem = null;
-                        for (MealsItemVO mealsItem : mealsInfo.getList()) {
-                            String mealsName = removeAllSpaceChar(mealsItem.getName());
-                            // 比较姓名、金额
-                            if (StringUtils.equalsIgnoreCase(summaryName, mealsName) && summaryItem.getMeals() == mealsItem.getAmount()) {
-                                // 找到数据跳出循环
-                                findMealsItem = mealsItem;
-                                break;
-                            }
-                        }
-                        if (findMealsItem == null) {
-                            // 教育费数据没找到
-                            errors.add(String.format("总表中 [ %s ] 的伙食费 [ %f ] 在往来（伙食费）表中没找到", summaryItem.getName(), summaryItem.getMeals()));
-                            continue;
-                        }
-                        if (canCheckLinkMan) {
-                            // 校验联系人
-                            boolean findMealsLinkMan = findLinkMan(linkManList, findMealsItem.getName(), findMealsItem.getMobile());
-                            if (!findMealsLinkMan) {
-                                errors.add(String.format("往来（伙食费）表中 [ %s ] 的手机号 [ %s ] 在联系人表中没找到", findMealsItem.getName(), findMealsItem.getMobile()));
-                            }
-                            if (!ValidateUtil.isMobile(findMealsItem.getMobile())) {
-                                errors.add(String.format("往来（伙食费）表中 [ %s ] 的手机号 [ %s ] 填写的不是手机号", findMealsItem.getName(), findMealsItem.getMobile()));
-                            }
-                        }
-                    }
+                if (canCheckMeals) {
+                    // 校验伙食费
+                    List<String> mealsErrors = checkMeals(mealsInfo.getList(), linkManList, canCheckLinkMan, summaryItem.getMeals(), summaryItem.getName());
+                    errors.addAll(mealsErrors);
                 }
             }
         } catch (Throwable e) {
             LOG.error("checkInvoicingBusiness error.", e);
             errors.add("校验程序业务逻辑异常." + e.getMessage());
+        }
+        return errors;
+    }
+
+    /**
+     * 检查伙食费
+     *
+     * @param mealsItems
+     * @param linkManList
+     * @param canCheckLinkMan
+     * @param summaryMeals
+     * @param summaryName
+     * @return
+     * @author guochaohui
+     * @date 2019-11-20 17:52
+     */
+    private List<String> checkMeals(List<MealsItemVO> mealsItems, List<LinkManItemVO> linkManList, boolean canCheckLinkMan, double summaryMeals, String summaryName) {
+        List<String> errors = Lists.newArrayList();
+        String checkName = removeAllSpaceChar(summaryName);
+        // 循环伙食费
+        MealsItemVO findMealsItem = null;
+        for (MealsItemVO mealsItem : mealsItems) {
+            String mealsName = removeAllSpaceChar(mealsItem.getName());
+            // 比较姓名、金额
+            if (StringUtils.equalsIgnoreCase(checkName, mealsName) && summaryMeals == mealsItem.getAmount()) {
+                // 找到数据跳出循环
+                findMealsItem = mealsItem;
+                if (summaryMeals == 0) {
+                    errors.add(String.format("总表中 [ %s ] 的伙食费 [ 0 ] 不应该在往来（伙食费）表创建数据", summaryName, summaryMeals));
+                }
+                break;
+            }
+        }
+        if (findMealsItem == null) {
+            // 教育费数据没找到
+            errors.add(String.format("总表中 [ %s ] 的伙食费 [ %f ] 在往来（伙食费）表中没找到", summaryName, summaryMeals));
+            return errors;
+        }
+        if (canCheckLinkMan) {
+            // 校验联系人
+            if (StringUtils.isBlank(findMealsItem.getMobile())) {
+                errors.add(String.format("往来（伙食费）表中 [ %s ] 的手机号没有填写", findMealsItem.getName()));
+                return errors;
+            }
+            if (!ValidateUtil.isMobile(findMealsItem.getMobile())) {
+                errors.add(String.format("往来（伙食费）表中 [ %s ] 的手机号 [ %s ] 填写的不是手机号", findMealsItem.getName(), findMealsItem.getMobile()));
+                return errors;
+            }
+            boolean findMealsLinkMan = findLinkMan(linkManList, findMealsItem.getName(), findMealsItem.getMobile());
+            if (!findMealsLinkMan) {
+                errors.add(String.format("往来（伙食费）表中 [ %s ] 的手机号 [ %s ] 在联系人表中没找到", findMealsItem.getName(), findMealsItem.getMobile()));
+            }
+        }
+        return errors;
+    }
+
+    /**
+     * 检查教育费
+     *
+     * @param tuitionItems
+     * @param linkManList
+     * @param canCheckLinkMan
+     * @param summaryTuition
+     * @param summaryName
+     * @return
+     * @author guochaohui
+     * @date 2019-11-20 17:45
+     */
+    private List<String> checkTuition(List<TuitionItemVO> tuitionItems, List<LinkManItemVO> linkManList, boolean canCheckLinkMan, double summaryTuition, String summaryName) {
+        List<String> errors = Lists.newArrayList();
+        String checkName = removeAllSpaceChar(summaryName);
+        // 循环教育费
+        TuitionItemVO findTuitionItem = null;
+        for (TuitionItemVO tuitionItem : tuitionItems) {
+            String tuitionName = removeAllSpaceChar(tuitionItem.getName());
+            // 比较姓名、金额
+            if (StringUtils.equalsIgnoreCase(checkName, tuitionName) && summaryTuition == tuitionItem.getAmount()) {
+                // 找到数据跳出循环
+                findTuitionItem = tuitionItem;
+                if (summaryTuition == 0) {
+                    errors.add(String.format("总表中 [ %s ] 的教育费 [ 0 ] 不应该在统一（教育费）表创建数据", summaryName, summaryTuition));
+                }
+                break;
+            }
+        }
+        if (findTuitionItem == null) {
+            // 教育费数据没找到
+            errors.add(String.format("总表中 [ %s ] 的教育费 [ %f ] 在统一（教育费）表中没找到", summaryName, summaryTuition));
+            return errors;
+        }
+        if (canCheckLinkMan) {
+            // 校验联系人
+            if (StringUtils.isBlank(findTuitionItem.getMobile())) {
+                errors.add(String.format("统一（教育费）表中 [ %s ] 的手机号没有填写", findTuitionItem.getName()));
+                return errors;
+            }
+            if (!ValidateUtil.isMobile(findTuitionItem.getMobile())) {
+                errors.add(String.format("统一（教育费）表中 [ %s ] 的手机号 [ %s ] 填写的不是手机号", findTuitionItem.getName(), findTuitionItem.getMobile()));
+                return errors;
+            }
+            boolean findTuitionLinkMan = findLinkMan(linkManList, findTuitionItem.getName(), findTuitionItem.getMobile());
+            if (!findTuitionLinkMan) {
+                errors.add(String.format("统一（教育费）表中 [ %s ] 的手机号 [ %s ] 在联系人表中没找到", findTuitionItem.getName(), findTuitionItem.getMobile()));
+            }
         }
         return errors;
     }
