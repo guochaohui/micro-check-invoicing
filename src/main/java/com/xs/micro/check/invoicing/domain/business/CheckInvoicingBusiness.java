@@ -107,6 +107,9 @@ public class CheckInvoicingBusiness extends BaseBusiness {
             }
         }
         if (findMealsItem == null) {
+            if (summaryMeals == 0) {
+                return errors;
+            }
             // 教育费数据没找到
             errors.add(String.format("总表中 [ %s ] 的伙食费 [ %f ] 在往来（伙食费）表中没找到", summaryName, summaryMeals));
             return errors;
@@ -159,6 +162,9 @@ public class CheckInvoicingBusiness extends BaseBusiness {
             }
         }
         if (findTuitionItem == null) {
+            if (summaryTuition == 0) {
+                return errors;
+            }
             // 教育费数据没找到
             errors.add(String.format("总表中 [ %s ] 的教育费 [ %f ] 在统一（教育费）表中没找到", summaryName, summaryTuition));
             return errors;
