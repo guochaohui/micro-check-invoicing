@@ -32,9 +32,12 @@ public class MicroCheckInvoicingApplication {
         SpringApplication.run(MicroCheckInvoicingApplication.class, args);
         sw.stop();
 
-        LOG.info("--------------------------------------------------------");
-        LOG.info("------------Service is started. cost:{} s---------------", sw.getTotalTimeSeconds());
-        LOG.info("--------------------------------------------------------");
+        LOG.info("\r\n" +
+                "\r\n #########################################################################" +
+                "\r\n #  程序启动完毕，总计耗时：{}", sw.getTotalTimeSeconds() +
+                "\r\n #  请打开浏览器，输入后面的网址就可以使用了。http://localhost:11986/ " +
+                "\r\n #########################################################################" +
+                "\r\n");
     }
 
 }
