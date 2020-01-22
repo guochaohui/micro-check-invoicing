@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
-import springfox.documentation.annotations.ApiIgnore;
 
 import java.util.List;
 
@@ -23,7 +22,6 @@ import java.util.List;
  *
  * @author guochaohui
  */
-@ApiIgnore
 @Controller
 @RequestMapping(value = "/checkInvoicing")
 public class CheckInvoicingController extends BaseController {

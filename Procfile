@@ -1,1 +1,0 @@
-web java -jar target/micro-check-invoicing-0.0.1-SNAPSHOT.jar
